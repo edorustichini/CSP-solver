@@ -4,6 +4,9 @@ class Constraint:
         #FIXME: forza la presenza di vincoli binari, o al massimo unari, perché influenza il backtracking
         self.variables = variables
         
-    def is_satisfied(self, assignment) -> bool:
+    def is_satisfied(self, assignment : dict) -> bool:
         """ Check if the constraint is satisfied with the (partial) assignent on the constrained values"""
         raise NotImplementedError
+
+class BinaryConstraint(Constraint):
+    pass
