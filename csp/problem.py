@@ -2,18 +2,13 @@ from constraint import BinaryConstraint
 
 
 class Problem:
-    def __init__(self):
+    def __init__(self, variables : list, domains : dict):
         """
 
-                :param variables: variables of the problem
-                :param domains: dict of var: domain values
-                :param constraints : dict of var: list of Binaryconstraints on var
-         """
-        self.variables = []
-        self.domains = {}
-        self.constraints = {}
-        
-    def __int__(self, variables : list, domains : dict):
+                       :param variables: variables of the problem
+                       :param domains: dict of var: domain values
+                       :param constraints : dict of var: list of Binaryconstraints on var
+        """
         
         # TODO: nella gestione dei vincoli DEVE garantire che ogni variabile sia associata a TUTTI i vincoli nei quali la variabile è presente
         
@@ -40,13 +35,15 @@ class Problem:
             if var not in self.variables:
                 raise LookupError(f"Variable {var} in constraint doesn't exist in problem")
             else:
+                if var not in self.constraints:
+                    self.constraints[var] = []
                 self.constraints[var].append(c)
-        
+    
     def check_assignment_consistency(self, assignment):
         """check for assignment consistency """
         for var in assignment:
-            for c in assignment[var]:
-                if not self.constraints[var].is_satisfied(assignment):
+            for constraint in self.constraints[var]:  # constraints è già una lista di BinaryConstraint
+                if not constraint.is_satisfied(assignment):
                     return False
         return True
     
