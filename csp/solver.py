@@ -77,7 +77,7 @@ class Solver:
     
     def mac(self, var, assignment: dict) -> [bool, list]:
         """
-        MAC algorithm - Restituisce (success, inferences)
+        MAC algorithm - Returns (success, inferences)
         """
         neighbours = self.neighbours(var)
         unassigned_neighbours = [v for v in neighbours if assignment[v] is None]
