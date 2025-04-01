@@ -1,44 +1,42 @@
+from typing import overload
+
 from constraint import BinaryConstraint
+from csp.constraint import DisjunctiveConstraint
 
 
 class Problem:
-    def __init__(self, variables : list, domains : dict):
+    def __init__(self):
         """
-
-                       :param variables: variables of the problem
-                       :param domains: dict of var: domain values
-                       :param constraints : dict of var: list of Binaryconstraints on var
+        variables: variables of the problem
+        domains: dict of var: domain values
+        constraints : dict of var - list of Binaryconstraints on var
+        
+        Must initialize the problem first, and then add variables and constraints
         """
-        
-        # TODO: nella gestione dei vincoli DEVE garantire che ogni variabile sia associata a TUTTI i vincoli nei quali la variabile è presente
-        
-        self.variables = variables
-        self.domains = domains
-        self.constraints = {} #dizionario dove per ogni variabile c'è lista di vincolo associati a quella
-        
-        for var in self.variables:
-            if var not in self.domains:
-                raise LookupError(f"Variable {var} does not have a domain")
+        self.variables = []
+        self.domains = {}
+        self.constraints : dict[any: BinaryConstraint]= {} #dizionario dove per ogni variabile c'è lista di vincolo associati a quella
     
     def add_variable(self, var, domain):
         """Adds variable to problem"""
         if var not in self.variables:
             self.variables.append(var)
-            self.domains[var] = list(domain)
+            self.domains[var] =domain.copy()
             self.constraints[var] = []
         else:
             raise ValueError(f"Variable {var} already exists")
             
     def add_constraint(self, c: BinaryConstraint):
-        """Add constraint to the problem"""
+        """
+        Add constraint to the problem
+        If the constraint isn't symmetric, you should add two different constraint to the two variable
+        """
         for var in c.variables:
             if var not in self.variables:
-                raise LookupError(f"Variable {var} in constraint doesn't exist in problem")
+                raise LookupError(f"Variable {var} in constraint not defined in problem")
             else:
-                if var not in self.constraints:
-                    self.constraints[var] = []
                 self.constraints[var].append(c)
-    
+        
     def check_assignment_consistency(self, assignment):
         """check for assignment consistency """
         for var in assignment:
@@ -48,7 +46,7 @@ class Problem:
         return True
     
     """------- utility functions"""
-    def add_variables_same_domain(self, domain, *variables):
+    def add_variables_same_domain(self, domain, variables : list): # TODO: capire se usare *args o lista
         """Adds list of variables sharing same domain"""
         for var in variables:
             self.add_variable(var, domain)
