@@ -10,7 +10,7 @@ class Solver:
         """Add var to assignment"""
         assignment[var] = val
     
-    def mrv(self, assignment):
+    def _mrv(self, assignment):
         """Implementation of MRV heuristic for the choice of unassigned var to process"""
         unassigned_vars = [v for v in assignment if assignment[v] is None]
         
@@ -18,7 +18,7 @@ class Solver:
         # FIXME: aggiungere degree heuristic in casi di parità
         return choice
     
-    def order_domain_values(self, var, assignment : dict) -> list:
+    def _order_domain_values(self, var, assignment : dict) -> list:
         """
         Heuristic for orderubg of domain values
         :param var:
@@ -27,7 +27,7 @@ class Solver:
         """
         return list(self.csp.domains[var])
     
-    def neighbours(self, var):
+    def _neighbours(self, var):
         neighbours = []
         for c in self.csp.constraints[var]:
             for v in c.variables:
@@ -51,35 +51,35 @@ class Solver:
             self.solutions.append(new_solution) # adds solution to solutions list
             return new_solution
         
-        var = self.mrv(assignment)
+        var = self._mrv(assignment)
         
-        for value in self.order_domain_values(var, assignment):
-            if self.value_consistent(var, value, assignment):
+        for value in self._order_domain_values(var, assignment):
+            if self._value_consistent(var, value, assignment):
                 assignment[var] = value
                 
-                success, inferences = self.mac(var, assignment) # inferences in a subset of problem.domains
+                success, inferences = self._mac(var, assignment) # inferences in a subset of problem.domains
                 
                 if success:
-                    self.add_inferences(inferences)
+                    self._add_inferences(inferences)
                     result = self._backtracking(assignment)
                     if result is None:
-                        self.remove_inferences(inferences)
+                        self._remove_inferences(inferences)
                     
             assignment[var] = None
         return None # fail
         
-    def value_consistent(self, var, val, assignment) -> bool:
+    def _value_consistent(self, var, val, assignment) -> bool:
         for c in self.csp.constraints[var]:
             assignment[var] = val
             if not c.is_satisfied(assignment):
                 return False
         return True
     
-    def mac(self, var, assignment: dict) -> [bool, list]:
+    def _mac(self, var, assignment: dict) -> [bool, list]:
         """
         MAC algorithm - Returns (success, inferences)
         """
-        neighbours = self.neighbours(var)
+        neighbours = self._neighbours(var)
         unassigned_neighbours = [v for v in neighbours if assignment[v] is None]
         queue = []
         
@@ -88,9 +88,14 @@ class Solver:
                 if v != var and v in unassigned_neighbours:
                     queue.append((var, v, c))
         
-        return self.AC_3(queue)
+        return self._AC_3(queue)
     
-    def AC_3(self, queue=None):
+    def _AC_3(self, queue=None):
+        """
+        NOTA: questa implementazione non modifica i domini delle variabili, ma ritorna i valori da togliere
+        :param queue:
+        :return:
+        """
         if queue is None:
             queue = []
             for x in self.csp.variables:
@@ -103,22 +108,23 @@ class Solver:
         while queue:
             xi, xj, constraint = queue.pop(0)
             
-            removed_values = self.revise(xi, xj, constraint)
+            removed_values = self._revise(xi, xj, constraint)
             if removed_values:
                 inferences[xi].extend(removed_values[xi])
                 
-                if not self.csp.domains[xi]:
+                if len(inferences[xi])==len(self.csp.domains[xi]):
+                    #xi domain will be reduced to {}
+                    print("NON RISOLVIBILE")
                     return False, None
                 
-                for xk in self.neighbours(xi):
+                for xk in self._neighbours(xi):
                     if xk != xj:
                         for c in self.csp.constraints[xk]:
                             if xi in c.variables:
                                 queue.append((xk, xi, c))
-        
         return True, inferences
     
-    def revise(self, xi, xj, constraint):
+    def _revise(self, xi, xj, constraint):
         inf = {}
         for x in self.csp.domains[xi].copy():
             consistent = False
@@ -134,7 +140,7 @@ class Solver:
                     inf[xi].append(x)
         return inf
             
-    def add_inferences(self, inf):
+    def _add_inferences(self, inf):
         """
         Adds inferences (inf) removing values from variables domains
         :param inf:
@@ -143,10 +149,11 @@ class Solver:
         for var in inf:
             for value in inf[var]:
                 # TODO: gestire caso in cui value non è presente nel dominio con eccezzioni
-                print(f"Rimosso {value} dal dominio di {var}")
-                self.csp.domains[var].remove(value)
+                if value in self.csp.domains[var]:
+                    self.csp.domains[var].remove(value)
+                
     
-    def remove_inferences(self, inf):
+    def _remove_inferences(self, inf):
         """
         Restore domains as they were before inference operation
         """
