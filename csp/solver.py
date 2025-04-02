@@ -39,6 +39,8 @@ class Solver:
         """
         Returns all solutions for the problem
         """
+        #TODO: forse da cambiare il nome di questa funzione in "get all solutions"
+        #TODO: magari gestire caso di variabili senza vincoli che quindi possono essere "rimosse" dal problema, perché possono assumere qualsiasi valore
         assignment = {var: None for var in self.csp.variables}
         self._backtracking(assignment)
         return self.solutions
@@ -60,11 +62,10 @@ class Solver:
                 success, inferences = self._mac(var, assignment) # inferences in a subset of problem.domains
                 
                 if success:
-                    self._add_inferences(inferences)
                     result = self._backtracking(assignment)
                     if result is None:
                         self._remove_inferences(inferences)
-                    
+            
             assignment[var] = None
         return None # fail
         
@@ -116,6 +117,8 @@ class Solver:
                     #xi domain will be reduced to {}
                     print("NON RISOLVIBILE")
                     return False, None
+                
+                self._add_inferences(inferences)
                 
                 for xk in self._neighbours(xi):
                     if xk != xj:
