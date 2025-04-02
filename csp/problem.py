@@ -1,7 +1,6 @@
 from typing import overload
 
 from constraint import BinaryConstraint
-from csp.constraint import DisjunctiveConstraint
 
 
 class Problem:
@@ -14,7 +13,7 @@ class Problem:
         Must initialize the problem first, and then add variables and constraints
         """
         self.variables = []
-        self.domains = {}
+        self.domains = {} # TODO: forse cambiare questo in curr_domain (per indicare domains attuali, e aggiungere attributo initial_domain avere sempre in memoria una copia dei domini iniziali
         self.constraints : dict[any: BinaryConstraint]= {} #dizionario dove per ogni variabile c'è lista di vincolo associati a quella
     
     def add_variable(self, var, domain):
@@ -36,9 +35,10 @@ class Problem:
                 raise LookupError(f"Variable {var} in constraint not defined in problem")
             else:
                 self.constraints[var].append(c)
+        #TODO: da capire se devo gestire caso in cui tra due variabili ci sono più vincoli
         
     def check_assignment_consistency(self, assignment):
-        """check for assignment consistency """
+        """checks for assignment consistency """
         for var in assignment:
             for constraint in self.constraints[var]:  # constraints è già una lista di BinaryConstraint
                 if not constraint.is_satisfied(assignment):
@@ -50,10 +50,3 @@ class Problem:
         """Adds list of variables sharing same domain"""
         for var in variables:
             self.add_variable(var, domain)
-    
-    def get_all_arcs(self):
-        """Returns list of all constraints"""
-        arcs = []
-        for v in self.variables:
-            arcs.append(self.constraints[v].copy())
-        return arcs
