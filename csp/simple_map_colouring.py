@@ -7,38 +7,39 @@ def main():
     # 1. Creazione del problema
     print("Creazione problema CSP di colorazione mappa...")
     
-    domains = {
-        'WA': ['Rosso', 'Verde', 'Blu'],
-        'NT': ['Rosso', 'Verde', 'Blu'],
-        'Q': ['Rosso', 'Verde', 'Blu'],
-        'NSW': ['Rosso', 'Verde', 'Blu'],
-        'V': ['Rosso', 'Verde', 'Blu'],
-        'SA': ['Rosso', 'Verde', 'Blu'],
-    }
-    variables = list(domains.keys())
-    problem = Problem(variables, domains)
+    domain = ['Rosso', 'Verde', 'Blu']
+     #TODO: aggiungere var T (Tamzamia?) come nel libro, che è variabile senza vincoli
+    problem = Problem()
+    problem.add_variables_same_domain(domain, ['WA', 'NT','Q','NSW','V','SA'])
     
-    # 2. Aggiunta vincoli
-    print("Aggiunta vincoli...")
-    constraint_SA_WA = BinaryConstraint(('SA', 'WA'), lambda a, b: a != b)
-    constraint_SA_NT = BinaryConstraint(('SA', 'NT'), lambda a, b: a != b)
-    constraint_SA_Q = BinaryConstraint(('SA', 'Q'), lambda a, b: a != b)
-    constraint_SA_NSW = BinaryConstraint(('SA', 'NSW'), lambda a, b: a != b)
-    constraint_SA_V = BinaryConstraint(('SA', 'V'), lambda a, b: a != b)
-    constraint_WA_NT = BinaryConstraint(('WA', 'NT'), lambda a, b: a != b)
-    constraint_NT_Q = BinaryConstraint(('NT', 'Q'), lambda a, b: a != b)
-    constraint_Q_NSW = BinaryConstraint(('Q', 'NSW'), lambda a, b: a != b)
-    constraint_NSW_V = BinaryConstraint(('NSW', 'V'), lambda a, b: a != b)
+    print("Adding constraints...")
+    #FIXME: si dovbrebbero mettere i vincoli in tutte e due i varsi
+    constraints = [
+        # in this problem the constraints are symmetric
+        BinaryConstraint(('SA', 'WA'), lambda a, b: a != b),
+        
+        BinaryConstraint(('SA', 'NT'), lambda a, b: a != b),
+        
+        BinaryConstraint(('SA', 'Q'), lambda a, b: a != b),
+        
+        BinaryConstraint(('SA', 'NSW'), lambda a, b: a != b),
+        
+        BinaryConstraint(('SA', 'V'), lambda a, b: a != b),
+        
+        BinaryConstraint(('WA', 'NT'), lambda a, b: a != b),
+        
+        BinaryConstraint(('NT', 'Q'), lambda a, b: a != b),
+        
+        BinaryConstraint(('Q', 'NSW'), lambda a, b: a != b),
+        
+        BinaryConstraint(('NSW', 'V'), lambda a, b: a != b),
+    ]
     
-    problem.add_constraint(constraint_SA_WA)
-    problem.add_constraint(constraint_SA_NT)
-    problem.add_constraint(constraint_SA_Q)
-    problem.add_constraint(constraint_SA_NSW)
-    problem.add_constraint(constraint_SA_V)
-    problem.add_constraint(constraint_WA_NT)
-    problem.add_constraint(constraint_NT_Q)
-    problem.add_constraint(constraint_Q_NSW)
-    problem.add_constraint(constraint_NSW_V)
+    print("Vincoli:")
+    for c in constraints:
+        problem.add_constraint(c)
+        print(f"{c.variables}")
+    
     
     
     print("Risoluzione con backtracking + MAC...")
@@ -52,5 +53,6 @@ def main():
         for var, val in sorted(sol.items()):
             print(f"{var}: {val}")
     
+main()
 
     
