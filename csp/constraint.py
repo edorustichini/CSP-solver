@@ -32,38 +32,9 @@ class BinaryConstraint(Constraint):
         :return: True if constraint is satisfied, else false
         """
         var1, var2 = self.variables
-        if var1 not in assignment or var2 not in assignment:
+        if assignment[var1] is None or assignment[var2] is None:
             return True  # if there's an unassigned var, constraint is always satisfied
         
         return self.constraint_func(assignment[var1], assignment[var2])
 
 
-
-class PrecedenceConstraint(BinaryConstraint):
-    """
-    Precedence constraint between two variables for job-shop scheduling problems
-    """
-    def __init__(self, first ,second, first_duration : int):
-        precedence = lambda a,b : a + first_duration <= b
-        super().__init__([first, second], precedence)
-        
-#FIXME: NON HA SENSO
-class DisjunctiveConstraint(BinaryConstraint):
-    """
-    Constraint for shared variable:
-    Operations A must finish before B, or B must finish before A
-    """
-    def __init__(self, varA, varB, durationA, durationB):
-        precedence = lambda a,b, duration : a + duration <= b
-        super().__init__([varA, varB], precedence)
-
-   # FIXME: forse possibile farlo chiamando is_satisfied di BinaryConstraint
-    @override
-    def is_satisfied(self, assignment) -> bool:
-        # perché cambia solo il valore di ritorno
-        var1, var2 = self.variables
-        if var1 not in assignment or var2 not in assignment:
-            return True  # if there's an unassigned var, constraint is always satisfied
-        
-        # FIXME: NON VA BENE
-        return self.constraint_func(assignment[var1], assignment[var2]) or self.constraint_func(assignment[var2], assignment[var1])
