@@ -35,11 +35,28 @@ class Solver:
                     neighbours.append(v)
         return neighbours
     
-    def backtracking_search(self) -> list:
+    def get_all_solutions(self) -> list[dict]:
+        """
+        First calls AC_3 to reduce domains, then search the solution using backtracking based on MAC
+        :return:
+        """
+        print("AC_3 is running .....")
+        if self._AC_3() is None:
+            return None
+        print("Domains after AC_3")
+        for var, domain in self.csp.domains.items():
+            print(var + f" : {domain}")
+        print("Backtracking is searching the solution...")
+        solutions = self.backtracking_search()
+        print("Finished!!!")
+        print(f"Found {len(solutions)} solutions to the problem")
+        return solutions
+    
+    def backtracking_search(self) -> list[dict]:
         """
         Returns all solutions for the problem
         """
-        #TODO: forse da cambiare il nome di questa funzione in "get all solutions"
+        #TODO: forse da cambiare il nome di questa funzione in "get all solutions" oppure fare funzione get all solution che prima chiama AC_3 e poi fa la backtracking search
         #TODO: magari gestire caso di variabili senza vincoli che quindi possono essere "rimosse" dal problema, perché possono assumere qualsiasi valore
         assignment = {var: None for var in self.csp.variables}
         self._backtracking(assignment)
@@ -115,7 +132,7 @@ class Solver:
                 
                 if len(inferences[xi])==len(self.csp.domains[xi]):
                     #xi domain will be reduced to {}
-                    print("NON RISOLVIBILE")
+                    print("There's no solution to the problem")
                     return False, None
                 
                 self._add_inferences(inferences)
@@ -172,4 +189,4 @@ class Solver:
         return True
         
         
-    
+    #TODO USARE for key, value in dict.items(): value per iterare sui dizionari, invece di fare for key in dict : dict[var]
