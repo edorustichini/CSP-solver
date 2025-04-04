@@ -41,7 +41,7 @@ class Solver:
         :return:
         """
         print("AC_3 is running .....")
-        if self._AC_3() is None:
+        if self._AC_3() is None: #FIXME: non so se ha molto senso chiamare AC_3 qua visto che AC_3 viene chiamato all'interno di backtrack
             return None
         print("Domains after AC_3")
         for var, domain in self.csp.domains.items():
