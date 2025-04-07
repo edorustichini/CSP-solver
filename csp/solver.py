@@ -3,8 +3,6 @@ from problem import Problem
 class Solver:
     def __init__(self, csp : Problem):
         self.csp = csp
-        # TODO: controlla prima che sia un minimo formato: ovvero ci siano variabile ecc
-        self.solutions = []
     
     def assign(self, var, val, assignment : dict):
         """Add var to assignment"""
@@ -38,7 +36,6 @@ class Solver:
     def get_all_solutions(self) -> list[dict]:
         """
         First calls AC_3 to reduce domains, then search the solution using backtracking based on MAC
-        :return:
         """
         print("AC_3 is running .....")
         if self._AC_3() is None: #FIXME: non so se ha molto senso chiamare AC_3 qua visto che AC_3 viene chiamato all'interno di backtrack
@@ -49,25 +46,24 @@ class Solver:
         print("Backtracking is searching the solution...")
         solutions = self.backtracking_search()
         print("Finished!!!")
-        print(f"Found {len(solutions)} solutions to the problem")
+        
         return solutions
     
     def backtracking_search(self) -> list[dict]:
         """
-        Returns all solutions for the problem
+        Performs backtracking search based on MAC and returns all solutions for the problem
         """
-        #TODO: forse da cambiare il nome di questa funzione in "get all solutions" oppure fare funzione get all solution che prima chiama AC_3 e poi fa la backtracking search
-        #TODO: magari gestire caso di variabili senza vincoli che quindi possono essere "rimosse" dal problema, perché possono assumere qualsiasi valore
         assignment = {var: None for var in self.csp.variables}
-        self._backtracking(assignment)
-        return self.solutions
+        solutions = []
+        self._backtracking(assignment, solutions)
+        return solutions
     
     
-    def _backtracking(self, assignment :dict):
-        """assignemnt is a dict of var assigned"""
+    def _backtracking(self, assignment :dict, solutions : list):
+        """assignment is a dict of var assigned"""
         if self._check_assignment_complete(assignment):
             new_solution = assignment.copy()
-            self.solutions.append(new_solution) # adds solution to solutions list
+            solutions.append(new_solution) # adds solution to solutions list
             return new_solution
         
         var = self._mrv(assignment)
@@ -79,7 +75,7 @@ class Solver:
                 success, inferences = self._mac(var, assignment) # inferences in a subset of problem.domains
                 
                 if success:
-                    result = self._backtracking(assignment)
+                    result = self._backtracking(assignment, solutions)
                     if result is None:
                         self._remove_inferences(inferences)
             
@@ -132,7 +128,6 @@ class Solver:
                 
                 if len(inferences[xi])==len(self.csp.domains[xi]):
                     #xi domain will be reduced to {}
-                    print("There's no solution to the problem")
                     return False, None
                 
                 self._add_inferences(inferences)

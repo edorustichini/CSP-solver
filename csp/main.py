@@ -1,3 +1,4 @@
+import random
 from job_scheduling import JobShopSchedulingProblem
 from solver import Solver
 
@@ -32,18 +33,39 @@ def jss_problem_instance(duration : dict):
     solver = Solver(jss_problem)
     
     solutions = solver.get_all_solutions()
+    if len(solutions) == 0:
+        print("Non c'è soluzione al problema")
+        solutions = []
+        # TODO gestire meglio caso vuoto
     
-    print("Some solutions")
-    num = 5
-    for i, solution in enumerate(solutions[:num], start=1):
-        print(f"Solution n. {i} :")
-        for op, value in solution.items():
-            print(f"{op} = {value}")
-        print("------------------------------------------------------------------------- \n")
-    print(f".... other {len(solutions) - 5} found")
+    num = 1
+    if solutions:
+        while num<=5:
+            print("Some solutions")
+            sol = random.choice(solutions)
+            print(f"\nsol {num} ------------------")
+            for var,value in sol.items():
+                tmp = [var2 for c in jss_problem.constraints[var] for var2 in  c.variables  if var2 != var]
+                print(f"{var} = {value} , ha vincoli da verificare con :{tmp}")
+            num += 1
+        print(f".... other {len(solutions) - num} found")
     
     # TODO: SCEGLIERE UNA SOLUZIONE A COSTO MINIMO
 
+def get_cost(jss_p : JobShopSchedulingProblem, solution : dict):
+    # in this specified example, "Ispezione" must be the last operation
+    # so you can calculate the solution "cost" adding the value taken in the solution by "Ispezione" and its duration
+    return solution["Ispezione"] + jss_p.operation_duration["Ispezione"]
+
+def get_minium_cost(jss_p : JobShopSchedulingProblem, solutions : list) -> list:
+    costs = []
+    for i,sol in enumerate(solutions, start=0):
+        costs.append(get_cost(jss_p, sol))
+    minimum = min(costs)
+    min_solutions = [solutions[i] for i, sol in enumerate(solutions, start=0) if costs[i] == minimum]
+    return min_solutions
+def choose_sol(solutions):
+    return solutions[0]
 
 if __name__ == "__main__":
     duration1= {

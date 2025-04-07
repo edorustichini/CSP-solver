@@ -34,10 +34,16 @@ I vari moduli presenti nel progetto danno la possibilità di:
 3. Eseguire lo script principale:
 
 ```
-python main.py
+python csp/main.py
 ```
 
 Questo risolverà tre diverse istanze di job scheduling, stamperà tutte le soluzioni compatibili e selezionerà la soluzione a costo minimo per ciascuna.
+
+Se invece si vuole creare e risolvere un problema specifico si devo:
+1. istanziare il problema creando un oggetto Problem
+2. Aggiungere variabili, domini e vincoli al problema
+3. istanziare un risolutore creando un oggetto Solver
+4. Chiamare la funzione get_all_solutions del solver
 
 ### Output Atteso
 

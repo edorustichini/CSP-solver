@@ -24,7 +24,7 @@ class JobShopSchedulingProblem(Problem):
     def simple_inference(self):
         '''
         Removes impossible values. Ex: if op1 has x duration, and the max_time is Y, then op1 cannot have values > Y - x
-        FIXME: agigusta questo commento
+        TODO: forse avrebbe senso mettere questo metodo nella classe Problem, e magari chiamarlo nel costruttore del problema per fare una prima parte di "PREPROCESSING" che fa inferenza su vincoli unari/banali, e poi estenderlo e implementarlo in ogni specifico problema
         :return:
         '''
         for var, duration in self.operation_duration.items():
