@@ -4,90 +4,91 @@ class Solver:
     def __init__(self, csp : Problem):
         self.csp = csp
     
-    def assign(self, var, val, assignment : dict):
-        """Add var to assignment"""
-        assignment[var] = val
-    
-    def _mrv(self, assignment):
-        """Implementation of MRV heuristic for the choice of unassigned var to process"""
-        unassigned_vars = [v for v in assignment if assignment[v] is None]
-        
-        choice = min(unassigned_vars, key=lambda var: len(self.csp.domains[var]))
-        # FIXME: aggiungere degree heuristic in casi di parità
-        return choice
-    
-    def _order_domain_values(self, var, assignment : dict) -> list:
-        """
-        Heuristic for orderubg of domain values
-        :param var:
-        :param assignment:
-        :return: list of value ordered with the heuristic logic
-        """
-        return list(self.csp.domains[var])
-    
-    def _neighbours(self, var):
-        neighbours = []
-        for c in self.csp.constraints[var]:
-            for v in c.variables:
-                if v is not var:
-                    neighbours.append(v)
-        return neighbours
-    
     def get_all_solutions(self) -> list[dict]:
         """
-        First calls AC_3 to reduce domains, then search the solution using backtracking based on MAC
+        Returns all found solutions
         """
-        print("AC_3 is running .....")
-        if self._AC_3() is None: #FIXME: non so se ha molto senso chiamare AC_3 qua visto che AC_3 viene chiamato all'interno di backtrack
-            return None
-        print("Domains after AC_3")
-        for var, domain in self.csp.domains.items():
-            print(var + f" : {domain}")
-        print("Backtracking is searching the solution...")
+        print("Backtracking is searching the solutions...")
         solutions = self.backtracking_search()
         print("Finished!!!")
-        
         return solutions
     
     def backtracking_search(self) -> list[dict]:
-        """
-        Performs backtracking search based on MAC and returns all solutions for the problem
-        """
-        assignment = {var: None for var in self.csp.variables}
+        empty_assignment = {var: None for var in self.csp.variables} #a key for every var
         solutions = []
-        self._backtracking(assignment, solutions)
+        self._backtracking(empty_assignment, solutions)
         return solutions
     
-    
     def _backtracking(self, assignment :dict, solutions : list):
-        """assignment is a dict of var assigned"""
+        """
+        Performs backtracking search based on MAC and returns all solutions for the problem.
+        """
+        #TODO: considerare se aggiungere possibilità di scegliere se rendere solo una soluzione o più, nel primo caso chiamata a MAC avrebbe senso, nel secondo meno
         if self._check_assignment_complete(assignment):
+            # adds new solution and returns it the previous call of _backtracking
             new_solution = assignment.copy()
-            solutions.append(new_solution) # adds solution to solutions list
+            solutions.append(new_solution)
             return new_solution
         
-        var = self._mrv(assignment)
+        selected_var = self._mrv(assignment)
         
-        for value in self._order_domain_values(var, assignment):
-            if self._value_consistent(var, value, assignment):
-                assignment[var] = value
+        for value in self._order_domain_values(selected_var, assignment):
+            if self._is_value_consistent(selected_var, value, assignment):
+                assignment[selected_var] = value #extend the assignment assigning value to var
                 
-                success, inferences = self._mac(var, assignment) # inferences in a subset of problem.domains
+                success, inferences = self._mac(selected_var, assignment)
                 
                 if success:
                     result = self._backtracking(assignment, solutions)
                     if result is None:
                         self._remove_inferences(inferences)
             
-            assignment[var] = None
+            assignment[selected_var] = None
         return None # fail
-        
-    def _value_consistent(self, var, val, assignment) -> bool:
+ 
+    def _is_value_consistent(self, var, val, assignment) -> bool:
+        """
+        A value is consistent if, when assigned to the var, it doesn't "break" a constraint
+        """
+        assignment[var] = val
         for c in self.csp.constraints[var]:
-            assignment[var] = val
             if not c.is_satisfied(assignment):
                 return False
         return True
+    
+    def _mrv(self, assignment):
+        """
+        Implementation of Minimum Remaining Values heuristic for the selection of an unassigned var to process.
+        If there are multiple variables with same number of remaining values, degree heuristic is used.
+        """
+        unassigned_vars = [v for v in assignment if assignment[v] is None]
+        
+        mrv = min(len(self.csp.curr_domains[var]) for var in unassigned_vars)
+        min_vars = [var for var in unassigned_vars if len(self.csp.curr_domains[var]) == mrv]
+        
+        if len(min_vars) > 1:
+            return max(min_vars, key=lambda var: len(self.csp.constraints[var]))  # degree heuristic
+        else:
+            return min_vars[0]
+    
+    def _order_domain_values(self, var, assignment: dict) -> list:
+        """
+        Heuristic for ordering of domain values, returns list of value ordered with the heuristic logic
+        """
+        return list(self.csp.curr_domains[var])  # for the example of the project's assignment it doesn't make sense to order domain values because it's requested to enumerate all solutions
+    
+    def _neighbours(self, var):
+        """
+        Finds neighbours of var in the constraint graph
+        :param var:
+        :return:
+        """
+        neighbours = []
+        for c in self.csp.constraints[var]:
+            for v in c.variables:
+                if v is not var:
+                    neighbours.append(v)
+        return neighbours
     
     def _mac(self, var, assignment: dict) -> [bool, list]:
         """
@@ -106,18 +107,16 @@ class Solver:
     
     def _AC_3(self, queue=None):
         """
-        NOTA: questa implementazione non modifica i domini delle variabili, ma ritorna i valori da togliere
-        :param queue:
-        :return:
+        AC-3 algorithm: if queue=None its initialized with every arc
         """
         if queue is None:
             queue = []
-            for x in self.csp.variables:
+            for x in self.csp.variables: # add every arc of the constraint graph
                 for constraint in self.csp.constraints[x]:
                     y = [var for var in constraint.variables if var != x][0]
                     queue.append((x, y, constraint))
         
-        inferences = {var: [] for var in self.csp.variables}
+        inferences = {var: [] for var in self.csp.variables} #list of values to be removed for every var => it is a subset of problem.domain
         
         while queue:
             xi, xj, constraint = queue.pop(0)
@@ -126,8 +125,7 @@ class Solver:
             if removed_values:
                 inferences[xi].extend(removed_values[xi])
                 
-                if len(inferences[xi])==len(self.csp.domains[xi]):
-                    #xi domain will be reduced to {}
+                if len(inferences[xi])==len(self.csp.curr_domains[xi]):  #xi domain is reduced to {}
                     return False, None
                 
                 self._add_inferences(inferences)
@@ -141,9 +139,9 @@ class Solver:
     
     def _revise(self, xi, xj, constraint):
         inf = {}
-        for x in self.csp.domains[xi].copy():
+        for x in self.csp.curr_domains[xi].copy():
             consistent = False
-            for y in self.csp.domains[xj]:
+            for y in self.csp.curr_domains[xj]:
                 if constraint.is_satisfied({xi: x, xj: y}):
                     consistent = True
                     break
@@ -157,31 +155,24 @@ class Solver:
             
     def _add_inferences(self, inf):
         """
-        Adds inferences (inf) removing values from variables domains
-        :param inf:
-        :return:
+        Adds inferences to the problem by removing values from variables domains
         """
         for var in inf:
             for value in inf[var]:
-                # TODO: gestire caso in cui value non è presente nel dominio con eccezzioni
-                if value in self.csp.domains[var]:
-                    self.csp.domains[var].remove(value)
-                
-    
+                if value in self.csp.curr_domains[var]:
+                    self.csp.curr_domains[var].remove(value)
+
     def _remove_inferences(self, inf):
         """
         Restore domains as they were before inference operation
         """
         for var in inf:
             for value in inf[var]:
-                if value not in self.csp.domains[var]:
-                    self.csp.domains[var].append(value)
+                if value not in self.csp.curr_domains[var]:
+                    self.csp.curr_domains[var].append(value)
         
     def _check_assignment_complete(self, assignment) -> bool:
         for v in self.csp.variables:
             if assignment[v] is None:
                 return False
         return True
-        
-        
-    #TODO USARE for key, value in dict.items(): value per iterare sui dizionari, invece di fare for key in dict : dict[var]

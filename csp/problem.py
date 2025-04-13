@@ -1,26 +1,26 @@
-from typing import overload
-
-from constraint import Constraint, BinaryConstraint
+from constraint import Constraint
 
 
 class Problem:
     def __init__(self):
         """
         variables: variables of the problem
-        domains: dict of var: domain values
-        constraints : dict of var - list of Constraints on var
+        curr_domains: dict of var:domain values
+        constraints : dict of var:list of Constraints on var
+        domains : initials domain for every variabile; useful if it's necessary to restore every value
         
         Must initialize the problem first, and then add variables and constraints
         """
         self.variables = []
-        self.domains = {} # TODO: forse cambiare questo in curr_domain (per indicare domains attuali, e aggiungere attributo initial_domain avere sempre in memoria una copia dei domini iniziali
-        self.constraints : dict[any: Constraint]= {} #dizionario dove per ogni variabile c'è lista di vincolo associati a quella
+        self.curr_domains = {}
+        self.constraints : dict[any: Constraint]= {}
+        self.domains = {}
     
     def add_variable(self, var, domain):
-        """Adds variable to problem"""
+        """Adds var and its domain to problem"""
         if var not in self.variables:
             self.variables.append(var)
-            self.domains[var] =domain.copy()
+            self.curr_domains[var] =domain.copy()
             self.constraints[var] = []
         else:
             raise ValueError(f"Variable {var} already exists")
@@ -36,15 +36,19 @@ class Problem:
                 self.constraints[var].append(c)
         
     def check_assignment_consistency(self, assignment):
-        """checks for assignment consistency """
+        """
+        Checks for assignment consistency by checking if every constraint for assigned variables is satisfied
+        """
         for var in assignment:
-            for constraint in self.constraints[var]:  # constraints è già una lista di BinaryConstraint
+            for constraint in self.constraints[var]:
                 if not constraint.is_satisfied(assignment):
                     return False
         return True
     
-    """------- utility functions"""
-    def add_variables_same_domain(self, domain, variables : list): # TODO: capire se usare *args o lista
-        """Adds list of variables sharing same domain"""
+
+    def add_variables_same_domain(self, domain, variables : list):
+        """
+        Adds list of variables sharing same domain to the problem
+        """
         for var in variables:
             self.add_variable(var, domain)
