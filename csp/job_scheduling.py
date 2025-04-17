@@ -2,7 +2,7 @@
 Job-shop scheduling problems:
 The variables represent the operations,
 """
-from csp.constraint import BinaryConstraint
+from constraint import BinaryConstraint
 from problem import Problem
 
 class JobShopSchedulingProblem(Problem):
@@ -23,7 +23,7 @@ class JobShopSchedulingProblem(Problem):
                 raise LookupError(f"{var} must have a duration")
             
         if preprocess:
-            self.simple_inference() # performs simple preprocess
+            self.simple_inference()
     
     def simple_inference(self):
         """
