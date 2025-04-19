@@ -6,9 +6,10 @@ class Solver:
     
     def get_all_solutions(self) -> list[dict]:
         """
-        Returns all found solutions
+        Returns all found solutions: performs AC-3 before searching the solution
         """
         print("Backtracking is searching the solutions...")
+        self._AC_3()
         solutions = self.backtracking_search()
         print("Finished!!!")
         return solutions
@@ -23,7 +24,6 @@ class Solver:
         """
         Performs backtracking search based on MAC and returns all solutions for the problem.
         """
-        #TODO: considerare se aggiungere possibilità di scegliere se rendere solo una soluzione o più, nel primo caso chiamata a MAC avrebbe senso, nel secondo meno
         if self._check_assignment_complete(assignment):
             # adds new solution and returns it the previous call of _backtracking
             new_solution = assignment.copy()
@@ -38,11 +38,10 @@ class Solver:
                 
                 success, inferences = self._mac(selected_var, assignment)
                 
-                if success:
+                if success: #
                     result = self._backtracking(assignment, solutions)
-                    if result is None:
-                        self._remove_inferences(inferences)
-            
+                self._remove_inferences(inferences)
+    
             assignment[selected_var] = None
         return None # fail
  
@@ -63,8 +62,8 @@ class Solver:
         """
         unassigned_vars = [v for v in assignment if assignment[v] is None]
         
-        mrv = min(len(self.csp.curr_domains[var]) for var in unassigned_vars)
-        min_vars = [var for var in unassigned_vars if len(self.csp.curr_domains[var]) == mrv]
+        mrv = min(len(self.csp.domains[var]) for var in unassigned_vars)
+        min_vars = [var for var in unassigned_vars if len(self.csp.domains[var]) == mrv]
         
         if len(min_vars) > 1:
             return max(min_vars, key=lambda var: len(self.csp.constraints[var]))  # degree heuristic
@@ -75,7 +74,7 @@ class Solver:
         """
         Heuristic for ordering of domain values, returns list of value ordered with the heuristic logic
         """
-        return list(self.csp.curr_domains[var])  # for the example of the project's assignment it doesn't make sense to order domain values because it's requested to enumerate all solutions
+        return list(self.csp.domains[var])  # for the example of the project's assignment it doesn't make sense to order domain values because it's requested to enumerate all solutions
     
     def _neighbours(self, var):
         """
@@ -90,7 +89,7 @@ class Solver:
                     neighbours.append(v)
         return neighbours
     
-    def _mac(self, var, assignment: dict) -> [bool, list]:
+    def _mac(self, var, assignment: dict) -> (bool, list):
         """
         MAC algorithm - Returns (success, inferences)
         """
@@ -104,7 +103,7 @@ class Solver:
                     queue.append((var, v, c))
         
         return self._AC_3(queue)
-    
+        
     def _AC_3(self, queue=None):
         """
         AC-3 algorithm: if queue=None its initialized with every arc
@@ -125,9 +124,9 @@ class Solver:
             if removed_values:
                 inferences[xi].extend(removed_values[xi])
                 
-                if len(inferences[xi])==len(self.csp.curr_domains[xi]):  #xi domain is reduced to {}
-                    return False, None
-                
+                if len(inferences[xi])==len(self.csp.domains[xi]):  #xi domain is reduced to {}
+                    return False, {}
+                    
                 self._add_inferences(inferences)
                 
                 for xk in self._neighbours(xi):
@@ -139,9 +138,9 @@ class Solver:
     
     def _revise(self, xi, xj, constraint):
         inf = {}
-        for x in self.csp.curr_domains[xi].copy():
+        for x in self.csp.domains[xi].copy():
             consistent = False
-            for y in self.csp.curr_domains[xj]:
+            for y in self.csp.domains[xj]:
                 if constraint.is_satisfied({xi: x, xj: y}):
                     consistent = True
                     break
@@ -159,8 +158,8 @@ class Solver:
         """
         for var in inf:
             for value in inf[var]:
-                if value in self.csp.curr_domains[var]:
-                    self.csp.curr_domains[var].remove(value)
+                if value in self.csp.domains[var]:
+                    self.csp.domains[var].remove(value)
 
     def _remove_inferences(self, inf):
         """
@@ -168,8 +167,8 @@ class Solver:
         """
         for var in inf:
             for value in inf[var]:
-                if value not in self.csp.curr_domains[var]:
-                    self.csp.curr_domains[var].append(value)
+                if value not in self.csp.domains[var]:
+                    self.csp.domains[var].append(value)
         
     def _check_assignment_complete(self, assignment) -> bool:
         for v in self.csp.variables:
