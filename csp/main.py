@@ -1,28 +1,85 @@
-import time
+from gant import create_gant
 from job_scheduling import JobShopSchedulingProblem
 from solver import Solver
 from CPMpy import solve_with_cpmpy
+
 
 def get_cost(jss_p : JobShopSchedulingProblem, solution : dict):
     # in this specified example, "Ispezione" must be the last operation
     # so you can calculate the solution's "cost" adding the value taken in the solution by "Ispezione" and its duration
     return solution["Ispezione"] + jss_p.operation_duration["Ispezione"]
 
-def get_minium_cost(jss_p : JobShopSchedulingProblem, solutions : list) -> list:
-    costs = []
-    for i,sol in enumerate(solutions, start=0):
-        costs.append(get_cost(jss_p, sol))
-    minimum = min(costs)
-    min_solutions = [solutions[i] for i, sol in enumerate(solutions, start=0) if costs[i] == minimum]
-    return min_solutions
+def get_minium_cost(problem, solutions):
+    min_cost = min(get_cost(problem, sol) for sol in solutions)
+    return [sol for sol in solutions if get_cost(problem, sol) == min_cost]
 def choose_sol(solutions):
     return solutions[0]
 
-def test_three_instances():
+def test_three_instances(precedences, duration1, max_time1, duration2, max_time2, duration_3, max_time3):
+    my_results = []
+    cpmpy_results = []
+    
+    print("\n Instance n. 1")
+    my_results.append(run_instance(duration1, max_time1, precedences, "Instance 1"))
+    cpmpy_results.append(solve_with_cpmpy(duration1, max_time1, precedences))
+    
+    
+    print("\n Instance n.2")
+    my_results.append(run_instance(duration2, max_time2, precedences, "Instance n.2"))
+    cpmpy_results.append(solve_with_cpmpy(duration2, max_time2, precedences))
+    
+    
+    print("\n Instance n. 3")
+    cpmpy_results.append(solve_with_cpmpy(duration3, max_time3, precedences))
+    my_results.append(run_instance(duration3, max_time3, precedences, "Instance n.3"))
+    
+
+
+def run_instance(duration, max_time, precedences, name=" "):
     """
-    Testa tre istanze diverse del problema JSS, con diversi max_time e durate.
+    Run a single istance of the jss problem
     """
-    # Istanza 1: Problema originale (max_time = 30)
+
+    print(f"\n--- {name}: My solver ---")
+    
+    #create problem
+    operations = list(duration.keys())
+    jss_problem = JobShopSchedulingProblem(operations, max_time, duration)
+
+    
+    for before, after in precedences:
+        jss_problem.add_precedence_constraint(before, after)
+    
+    jss_problem.add_disjunction_constraint('Asse_A', 'Asse_P')
+    
+    for op in operations:
+        if op != 'Ispezione':
+            jss_problem.add_precedence_constraint(op, 'Ispezione')  # adds constraints for final operation
+
+    # Solve the problem
+    solver = Solver(jss_problem)
+    solutions = solver.get_all_solutions()
+
+    min_solutions = get_minium_cost(jss_problem, solutions)
+    min_cost = get_cost(jss_problem, min_solutions[0])
+    print(f"Found  {len(solutions)} solutions")
+    print(f"Found {len(min_solutions)} minimal cost solutions")
+    print(f"Minimal cost: {min_cost}")
+    
+    
+    print("\n*** Minimum cost solution ***")
+    optimal_sol = min_solutions[0]
+    for var in sorted(optimal_sol.keys()):
+        end_time = optimal_sol[var] + duration[var]
+        print(f"{var}: inizio={optimal_sol[var]}, fine={end_time}")
+    
+    return {
+        "solutions": len(solutions) if solutions else 0,
+        "min_cost": min_cost,
+        "opt_sol": optimal_sol
+    }
+
+if __name__ == "__main__":
     duration1 = {
         'Asse_A': 10,
         'Asse_P': 10,
@@ -42,10 +99,9 @@ def test_three_instances():
     }
     max_time1 = 30
     
-    # Istanza 2: Vincolo temporale più stringente (max_time = 25)
     duration2 = {
-        'Asse_A': 7,
-        'Asse_P': 7,
+        'Asse_A': 5,
+        'Asse_P': 5,
         'Ruota_DA': 2,
         'Ruota_SA': 2,
         'Ruota_DP': 2,
@@ -60,11 +116,11 @@ def test_three_instances():
         'Copri_SP': 1,
         'Ispezione': 2
     }
-    max_time2 = 20
+    max_time2 = 18
     
     duration3 = {
-        'Asse_A': 15,
-        'Asse_P': 15,
+        'Asse_A': 12,
+        'Asse_P': 12,
         'Ruota_DA': 5,
         'Ruota_SA': 5,
         'Ruota_DP': 5,
@@ -77,9 +133,9 @@ def test_three_instances():
         'Copri_SA': 2,
         'Copri_DP': 2,
         'Copri_SP': 2,
-        'Ispezione': 5
+        'Ispezione': 4
     }
-    max_time3 = 45
+    max_time3 = 40
     
     precedences = [
         ('Asse_A', 'Ruota_DA'),
@@ -97,80 +153,7 @@ def test_three_instances():
         ('Dadi_DP', 'Copri_DP'),
         ('Dadi_SP', 'Copri_SP'),
     ]
-    
-    
-    my_results = []
-    cpmpy_results = []
-    
-    print("\n ISTANZA 1: Problema originale (max_time=30) ===")
-    my_results.append(run_instance(duration1, max_time1, precedences, "Istanza 1"))
-    cpmpy_results.append(solve_with_cpmpy(duration1, max_time1, precedences))
-    
-    '''
-    print("\n ISTANZA 2: Durate e max_time ridotti")
-    my_results.append(run_instance(duration2, max_time2, precedences, "Istanza 2"))
-    cpmpy_results.append(solve_with_cpmpy(duration2, max_time2, precedences))
+    #test_three_instances(precedences, duration1, max_time1, duration2, max_time2, duration3, max_time3)
+    result = run_instance(duration1, max_time1, precedences)
+    create_gant(result["opt_sol"], duration1)
 
-    print("\n=== ISTANZA 3: Durate e max_time aumentati1")
-    my_results.append(run_instance(duration3, max_time3, precedences, "Istanza 3"))
-    cpmpy_results.append(solve_with_cpmpy(duration3, max_time3, precedences))
-    '''
-
-
-def run_instance(duration, max_time, precedences, istance_name=" "):
-    """
-    Run a single istance of the jss problem
-    """
-
-    print(f"\n--- {istance_name}: Test con il mio solver (max_time={max_time}) ---")
-    
-    #create problema
-    operations = list(duration.keys())
-    jss_problem = JobShopSchedulingProblem(operations, max_time, duration)
-    
-    for before, after in precedences:
-        jss_problem.add_precedence_constraint(before, after)
-    
-    #
-    jss_problem.add_disjunction_constraint('Asse_A', 'Asse_P')
-    
-    # "Ispezione" as final operation
-    for op in operations:
-        if op != 'Ispezione':
-            jss_problem.add_precedence_constraint(op, 'Ispezione')
-    
-    # Solve the problem
-    solver = Solver(jss_problem)
-    start_time = time.time()
-    solutions = solver.get_all_solutions()
-    my_execution_time = time.time() - start_time
-    
-    if solutions:
-        #min_solutions = get_minium_cost(jss_problem, solutions)
-        #min_cost = get_cost(jss_problem, min_solutions[0])
-        print(f"Found  {len(solutions)} solutions")
-        #print(f"Found {len(min_solutions)} minimal cost soluitions ")
-        #print(f"Minimal cost: {min_cost}")
-        print(f"Execution time: {my_execution_time:.3f} seconds")
-        
-        '''
-        print("\n*** Minimum cost solution ***")
-        optimal_sol = min_solutions[0]
-        for var in sorted(optimal_sol.keys()):
-            end_time = optimal_sol[var] + duration[var]
-            print(f"{var}: inizio={optimal_sol[var]}, fine={end_time}")
-        '''
-    else:
-        print("Nessuna soluzione trovata")
-        min_cost = None
-    
-    return {
-        "solutions": len(solutions) if solutions else 0,
-        "min_cost": 0,
-        "execution_time": my_execution_time
-    }
-
-if __name__ == "__main__":
-    results = test_three_instances()
-    
-    

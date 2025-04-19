@@ -7,20 +7,18 @@ class Problem:
         variables: variables of the problem
         curr_domains: dict of var:domain values
         constraints : dict of var:list of Constraints on var
-        domains : initials domain for every variabile; useful if it's necessary to restore every value
         
         Must initialize the problem first, and then add variables and constraints
         """
         self.variables = []
-        self.curr_domains = {}
-        self.constraints : dict[any: Constraint]= {}
         self.domains = {}
+        self.constraints : dict[any: Constraint]= {}
     
     def add_variable(self, var, domain):
         """Adds var and its domain to problem"""
         if var not in self.variables:
             self.variables.append(var)
-            self.curr_domains[var] =domain.copy()
+            self.domains[var] =domain.copy()
             self.constraints[var] = []
         else:
             raise ValueError(f"Variable {var} already exists")
