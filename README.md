@@ -33,5 +33,5 @@ python csp/main.py
 Questo risolverà l'istanza che corrisponde all'esempio del libro: viene mostrato il numero di soluzioni valide trovate e soluzioni a costo minimo, per poi mostrare una soluzione a costo minimo.
 Se si vogliono risolvere le 3 istanze basta fare una chiamata alla funzione `test_three_instances`.
 
-#Relazione progetto
+# Relazione progetto
 Il file [Relazione Progetto.pdf](Relazione%20progetto.pdf) contiene una descrizione più approfondita del progetto.
