@@ -11,13 +11,13 @@ costo minimo. Si applichi il metodo ad almeno tre istanze diverse.
 I vari moduli presenti nel progetto danno la possibilità di:
 1. Definire problemi CSP generali, a cui si può aggiungere variabili e vincoli
 2. Applicare la ricerca backtracking ed enumerare tutte le soluzioni al problema
-3. Risolvere problemi di job-shop scheduling e mostrarne una a "costo minimo".
+3. Risolvere problemi di job-shop scheduling e mostrare una soluzione a "costo minimo".
 ## Guida
 
 ### Prerequisiti
 
 - Python 3.10 o superiore
-- cpmpy
+- CPMpy
 
 ### Esecuzione del Codice
 
