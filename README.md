@@ -8,9 +8,9 @@ descritto in §6.1.2 di R&N 2021 e lo si risolva enumerando tutte le soluzioni c
 costo minimo. Si applichi il metodo ad almeno tre istanze diverse.
 
 ## Funzionalità
-I vari moduli presenti nel progetto danno la possibilità di:
-1. Definire problemi CSP generali, a cui si può aggiungere variabili e vincoli
-2. Applicare la ricerca backtracking ed enumerare tutte le soluzioni al problema
+I moduli presenti danno la possibilità di:
+1. Definire problemi CSP generali, aggiungendo variabili e vincoli
+2. Applicare backtracking per enumerare tutte le soluzioni possibili 
 3. Risolvere problemi di job-shop scheduling e mostrare una soluzione a "costo minimo".
 ## Guida
 
@@ -34,4 +34,4 @@ Questo risolverà l'istanza che corrisponde all'esempio del libro: viene mostrat
 Se si vogliono risolvere le 3 istanze basta fare una chiamata alla funzione `test_three_instances`.
 
 # Relazione progetto
-Il file [Relazione Progetto.pdf](Relazione%20progetto.pdf) contiene una descrizione più approfondita del progetto.
+Il file [Relazione Progetto.pdf](Relazione%20progetto.pdf) contiene una documentazione più approfondita.
